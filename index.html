@@ -3,145 +3,563 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Falling Sun - iOS Game</title>
+    <title>Falling Sun – iOS Game</title>
     <style>
         :root {
-            --primary-color: #f39c12; /* Sonnen-Orange */
-            --bg-color: #1a1a2e; /* Dunkles Blau/Nacht */
-            --text-color: #ffffff;
-            --box-bg: #16213e;
+            --sun: #f39c12;
+            --sun2: #e74c3c;
+            --bg: #0d0d1a;
+            --card: #16213e;
+            --card2: #1a1a35;
+            --text: #ffffff;
+            --muted: #aaaacc;
         }
-        
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
         }
+
+        #stars {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            background: white;
+            animation: twinkle var(--d) ease-in-out infinite alternate;
+        }
+        @keyframes twinkle {
+            from { opacity: 0.1; transform: scale(0.8); }
+            to   { opacity: 0.9; transform: scale(1.2); }
+        }
+
+        .lang-switcher {
+            position: fixed;
+            top: 16px; right: 16px;
+            z-index: 1000;
+        }
+        .lang-btn {
+            background: rgba(243,156,18,0.15);
+            border: 1.5px solid var(--sun);
+            color: var(--sun);
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            backdrop-filter: blur(8px);
+            transition: background 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .lang-btn:hover { background: rgba(243,156,18,0.3); }
+        .lang-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--card);
+            border: 1px solid rgba(243,156,18,0.3);
+            border-radius: 14px;
+            overflow: hidden;
+            min-width: 160px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .lang-switcher.open .lang-dropdown { display: block; }
+        .lang-option {
+            padding: 12px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .lang-option:hover { background: rgba(243,156,18,0.15); }
+        .lang-option.active { color: var(--sun); font-weight: 700; }
+        .lang-flag { font-size: 18px; }
 
         header {
-            background: linear-gradient(135deg, #e67e22, #f1c40f);
-            color: #fff;
-            padding: 60px 20px;
+            position: relative;
+            z-index: 1;
             text-align: center;
+            padding: 90px 20px 70px;
+            background: linear-gradient(180deg, #1a0a00 0%, #2d1b00 40%, var(--bg) 100%);
         }
-
+        .sun-emoji {
+            font-size: 80px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(243,156,18,0.8));
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-14px); }
+        }
         header h1 {
-            font-size: 3em;
-            margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: clamp(2.4em, 8vw, 4em);
+            font-weight: 900;
+            margin-top: 16px;
+            background: linear-gradient(135deg, #f39c12, #e74c3c, #f1c40f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
         }
-
         header p {
-            font-size: 1.2em;
-            margin-top: 10px;
+            font-size: clamp(1em, 3vw, 1.3em);
+            color: var(--muted);
+            margin-top: 12px;
             font-weight: 300;
         }
+        .badge {
+            display: inline-block;
+            margin-top: 24px;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .appstore-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            background: #fff;
+            color: #000;
+            padding: 14px 28px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(255,255,255,0.15);
+        }
+        .appstore-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,255,255,0.25); }
+        .appstore-btn svg { width: 24px; height: 24px; }
 
         .container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
         }
 
-        .features {
-            background-color: var(--box-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            margin-bottom: 40px;
-        }
-
-        h2 {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 10px;
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        ul li {
-            background: rgba(255, 255, 255, 0.05);
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .support {
+        .section-title {
+            font-size: 1.8em;
+            font-weight: 900;
+            color: var(--sun);
             text-align: center;
-            padding: 30px;
-            background-color: var(--box-bg);
-            border-radius: 12px;
+            margin: 50px 0 28px;
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px; height: 3px;
+            background: linear-gradient(90deg, var(--sun), var(--sun2));
+            border-radius: 2px;
+            margin: 10px auto 0;
         }
 
-        .support a {
-            color: var(--primary-color);
+        .about-card {
+            background: linear-gradient(135deg, var(--card), var(--card2));
+            border: 1px solid rgba(243,156,18,0.2);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: #ddd;
+        }
+        .about-card strong { color: var(--sun); }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-top: 10px;
+        }
+        .feature-card {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 18px;
+            padding: 24px 20px;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--sun), var(--sun2));
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(243,156,18,0.35);
+            box-shadow: 0 8px 30px rgba(243,156,18,0.1);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+        .feature-title {
+            font-size: 1em;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .feature-desc { font-size: 0.88em; color: var(--muted); line-height: 1.6; }
+
+        .support-card {
+            background: var(--card);
+            border: 1px solid rgba(243,156,18,0.2);
+            border-radius: 20px;
+            padding: 36px;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .support-card p { color: var(--muted); margin-bottom: 10px; font-size: 1em; }
+        .support-card a {
+            color: var(--sun);
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 1.05em;
         }
-
-        .support a:hover {
-            text-decoration: underline;
-        }
+        .support-card a:hover { text-decoration: underline; }
 
         footer {
+            position: relative;
+            z-index: 1;
             text-align: center;
-            padding: 20px;
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: #888;
+            padding: 30px 20px;
+            color: #555;
+            font-size: 0.85em;
+            border-top: 1px solid rgba(255,255,255,0.05);
         }
+        footer a { color: #777; text-decoration: none; }
+        footer a:hover { color: #aaa; }
+        footer .sep { margin: 0 10px; }
 
-        footer a {
-            color: #ccc;
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            color: #fff;
+        @media (max-width: 500px) {
+            header { padding: 70px 16px 50px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .about-card, .support-card { padding: 24px 18px; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Falling Sun</h1>
-        <p>Don't let the sun fall into the abyss!</p>
-    </header>
+<div id="stars"></div>
 
-    <div class="container">
-        
-        <div class="features">
-            <h2>About the Game</h2>
-            <p>In <strong>Falling Sun</strong>, you control a glowing sun that is endlessly falling from the sky. Your mission? Keep it alive by safely landing on the platforms below!</p>
-            
-            <h2>Features</h2>
-            <ul>
-                <li><strong>📱 Intuitive Tilt Controls:</strong> Use your iOS device's motion sensors! Tilt your iPhone or iPad left and right to tilt the platforms and guide the sun safely to the next one.</li>
-                <li><strong>🎯 Skill & Timing:</strong> Land precisely on the platforms so you don't fall into the void. If you miss, the game is over!</li>
-                <li><strong>🏆 Highscore Hunt:</strong> Every successful landing gives you points. Compete with others and see who can achieve the highest score!</li>
-            </ul>
-        </div>
+<div class="lang-switcher" id="langSwitcher">
+    <button class="lang-btn" onclick="toggleLang()">
+        <span id="currentFlag">🇬🇧</span>
+        <span id="currentLang">EN</span>
+        <span>▾</span>
+    </button>
+    <div class="lang-dropdown" id="langDropdown">
+        <div class="lang-option" onclick="setLang('en')"><span class="lang-flag">🇬🇧</span> English</div>
+        <div class="lang-option" onclick="setLang('de')"><span class="lang-flag">🇩🇪</span> Deutsch</div>
+        <div class="lang-option" onclick="setLang('es')"><span class="lang-flag">🇪🇸</span> Español</div>
+        <div class="lang-option" onclick="setLang('zh-Hans')"><span class="lang-flag">🇨🇳</span> 简体中文</div>
+        <div class="lang-option" onclick="setLang('zh-Hant')"><span class="lang-flag">🇹🇼</span> 繁體中文</div>
+        <div class="lang-option" onclick="setLang('ja')"><span class="lang-flag">🇯🇵</span> 日本語</div>
+        <div class="lang-option" onclick="setLang('ko')"><span class="lang-flag">🇰🇷</span> 한국어</div>
+    </div>
+</div>
 
-        <div class="support">
-            <h2>Support & Contact</h2>
-            <p>Do you have any questions, feedback, or need help with the game?</p>
-            <p>We are here for you! Just send us an email at:</p>
-            <p><a href="mailto:evro89@hotmail.de">evro89@hotmail.de</a></p>
-        </div>
+<header>
+    <div class="sun-emoji">☀️</div>
+    <h1 data-i18n="title">Falling Sun</h1>
+    <p data-i18n="subtitle">Don't let the sun fall into the abyss!</p>
+    <div class="badge" data-i18n="badge">Available on iOS</div>
+    <br>
+    <a href="#" class="appstore-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <span data-i18n="download">Download on the App Store</span>
+    </a>
+</header>
 
+<div class="container">
+
+    <h2 class="section-title" data-i18n="about_title">About the Game</h2>
+    <div class="about-card">
+        <p data-i18n="about_text">In <strong>Falling Sun</strong>, you control a glowing sun endlessly falling from the sky. Your mission: survive by landing safely on platforms – guided only by the tilt of your iPhone!</p>
     </div>
 
-    <footer>
-        <p>&copy; 2026 Falling Sun. All rights reserved.</p>
-        <p><a href="index.html">Privacy Policy</a></p>
-    </footer>
+    <h2 class="section-title" data-i18n="features_title">Features</h2>
+    <div class="features-grid" id="featuresGrid"></div>
+
+    <div class="support-card">
+        <h2 class="section-title" style="margin-top:0" data-i18n="support_title">Support & Contact</h2>
+        <p data-i18n="support_text">Questions, feedback or need help?</p>
+        <p data-i18n="support_text2">We're here for you! Send us an email:</p>
+        <br>
+        <a href="mailto:evro89@hotmail.de">evro89@hotmail.de</a>
+    </div>
+
+</div>
+
+<footer>
+    <p>
+        &copy; 2026 Falling Sun.
+        <span data-i18n="footer_rights">All rights reserved.</span>
+        <span class="sep">·</span>
+        <a href="privacy.html" data-i18n="footer_privacy">Privacy Policy</a>
+    </p>
+</footer>
+
+<script>
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 120; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.5 + 0.5;
+        s.style.cssText = `
+            width:${size}px; height:${size}px;
+            top:${Math.random()*100}%;
+            left:${Math.random()*100}%;
+            --d:${(Math.random()*3+2).toFixed(1)}s;
+            animation-delay:${(Math.random()*4).toFixed(1)}s;
+        `;
+        starsEl.appendChild(s);
+    }
+
+    const LANGS = {
+        en: {
+            flag: '🇬🇧', label: 'EN',
+            title: 'Falling Sun',
+            subtitle: "Don't let the sun fall into the abyss!",
+            badge: 'Available on iOS',
+            download: 'Download on the App Store',
+            about_title: 'About the Game',
+            about_text: 'In <strong>Falling Sun</strong>, you control a glowing sun endlessly falling from the sky. Your mission: survive by landing safely on platforms – guided only by the tilt of your iPhone!',
+            features_title: 'Features',
+            features: [
+                { icon: '📱', title: 'Tilt Controls', desc: 'Tilt your iPhone left and right to guide the sun to safety. Intuitive, responsive and incredibly fun!' },
+                { icon: '🕳️', title: 'Black Holes', desc: 'Dangerous black holes lurk on the platforms. Avoid them – or activate your Rainbow Star to destroy them!' },
+                { icon: '🪂', title: 'Parachute', desc: 'Caught in a deadly free fall? Deploy your parachute to slow down and survive. Available in the shop!' },
+                { icon: '🌟', title: 'Rainbow Star', desc: 'Double-tap the screen to activate your Rainbow Star. Become invincible and destroy every black hole you touch!' },
+                { icon: '❤️', title: 'Extra Life', desc: 'Death is not always the end. Use an Extra Life to get a second chance and keep your run alive!' },
+                { icon: '🪙', title: 'Shop', desc: 'Collect coins during your run and spend them on powerful power-ups. Smart shopping wins the game!' },
+                { icon: '🏆', title: 'Highscore', desc: 'Every safe landing earns points. How high can you go? Beat your record and challenge the world!' },
+            ],
+            support_title: 'Support & Contact',
+            support_text: 'Questions, feedback or need help?',
+            support_text2: "We're here for you! Send us an email:",
+            footer_rights: 'All rights reserved.',
+            footer_privacy: 'Privacy Policy',
+        },
+        de: {
+            flag: '🇩🇪', label: 'DE',
+            title: 'Falling Sun',
+            subtitle: 'Lass die Sonne nicht in den Abgrund fallen!',
+            badge: 'Jetzt auf iOS',
+            download: 'Im App Store laden',
+            about_title: 'Über das Spiel',
+            about_text: 'In <strong>Falling Sun</strong> steuerst du eine leuchtende Sonne, die endlos vom Himmel fällt. Deine Mission: Überlebe, indem du sicher auf Plattformen landest – nur mit dem Kippen deines iPhones!',
+            features_title: 'Features',
+            features: [
+                { icon: '📱', title: 'Neigungssteuerung', desc: 'Kippe dein iPhone links und rechts, um die Sonne sicher zu führen. Intuitiv, reaktionsschnell und jede Menge Spaß!' },
+                { icon: '🕳️', title: 'Schwarze Löcher', desc: 'Gefährliche schwarze Löcher lauern auf den Plattformen. Weiche ihnen aus – oder zerstöre sie mit deinem Regenbogenstern!' },
+                { icon: '🪂', title: 'Fallschirm', desc: 'Im tödlichen freien Fall? Setze deinen Fallschirm ein, um sicher zu landen. Im Shop erhältlich!' },
+                { icon: '🌟', title: 'Regenbogenstern', desc: 'Doppeltippe auf den Bildschirm, um deinen Regenbogenstern zu aktivieren. Werde unbesiegbar und vernichte schwarze Löcher!' },
+                { icon: '❤️', title: 'Extraleben', desc: 'Der Tod ist nicht immer das Ende. Nutze ein Extraleben für eine zweite Chance und rette deinen Lauf!' },
+                { icon: '🪙', title: 'Shop', desc: 'Sammle Münzen und kaufe im Shop mächtige Power-Ups. Cleveres Shopping entscheidet über Sieg oder Niederlage!' },
+                { icon: '🏆', title: 'Highscore', desc: 'Jede sichere Landung bringt Punkte. Wie weit kommst du? Schlage deinen Rekord und fordere die Welt heraus!' },
+            ],
+            support_title: 'Support & Kontakt',
+            support_text: 'Fragen, Feedback oder Hilfe benötigt?',
+            support_text2: 'Wir sind für dich da! Schreib uns eine E-Mail:',
+            footer_rights: 'Alle Rechte vorbehalten.',
+            footer_privacy: 'Datenschutz',
+        },
+        es: {
+            flag: '🇪🇸', label: 'ES',
+            title: 'Falling Sun',
+            subtitle: '¡No dejes que el sol caiga al abismo!',
+            badge: 'Disponible en iOS',
+            download: 'Descargar en el App Store',
+            about_title: 'Sobre el juego',
+            about_text: 'En <strong>Falling Sun</strong>, controlas un sol brillante que cae sin fin desde el cielo. Tu misión: sobrevivir aterrizando en plataformas – ¡solo con inclinar tu iPhone!',
+            features_title: 'Características',
+            features: [
+                { icon: '📱', title: 'Control por inclinación', desc: '¡Inclina tu iPhone a la izquierda y a la derecha para guiar el sol a la seguridad. Intuitivo y muy divertido!' },
+                { icon: '🕳️', title: 'Agujeros negros', desc: 'Peligrosos agujeros negros acechan en las plataformas. ¡Esquívalos o activa tu Estrella Arcoíris para destruirlos!' },
+                { icon: '🪂', title: 'Paracaídas', desc: '¿En caída libre mortal? ¡Despliega tu paracaídas para aterrizar a salvo. Disponible en la tienda!' },
+                { icon: '🌟', title: 'Estrella Arcoíris', desc: '¡Toca dos veces la pantalla para activar tu Estrella Arcoíris! Vuélvete invencible y destruye cada agujero negro.' },
+                { icon: '❤️', title: 'Vida extra', desc: 'La muerte no siempre es el final. ¡Usa una Vida Extra para una segunda oportunidad!' },
+                { icon: '🪙', title: 'Tienda', desc: 'Recoge monedas y gástalas en potentes power-ups. ¡Comprar con inteligencia marca la diferencia!' },
+                { icon: '🏆', title: 'Puntuación máxima', desc: '¡Cada aterrizaje seguro da puntos. ¿Hasta dónde puedes llegar? Supera tu récord!' },
+            ],
+            support_title: 'Soporte y Contacto',
+            support_text: '¿Preguntas, comentarios o necesitas ayuda?',
+            support_text2: '¡Estamos aquí! Envíanos un correo:',
+            footer_rights: 'Todos los derechos reservados.',
+            footer_privacy: 'Política de privacidad',
+        },
+        'zh-Hans': {
+            flag: '🇨🇳', label: '中文',
+            title: 'Falling Sun',
+            subtitle: '别让太阳坠入深渊！',
+            badge: '现已登陆 iOS',
+            download: '在 App Store 下载',
+            about_title: '游戏介绍',
+            about_text: '在 <strong>Falling Sun</strong> 中，你控制一颗不断从天空坠落的发光太阳。你的任务：通过安全降落在平台上来生存——只需倾斜你的 iPhone！',
+            features_title: '游戏特色',
+            features: [
+                { icon: '📱', title: '倾斜操控', desc: '左右倾斜你的 iPhone 来引导太阳安全降落。直觉化、灵敏且趣味十足！' },
+                { icon: '🕳️', title: '黑洞', desc: '危险的黑洞潜伏在平台上。躲避它们——或者激活彩虹星来摧毁它们！' },
+                { icon: '🪂', title: '降落伞', desc: '陷入致命的自由落体？打开降落伞减速并安全降落。可在商店购买！' },
+                { icon: '🌟', title: '彩虹星', desc: '双击屏幕激活彩虹星！变得无敌并摧毁你接触到的每一个黑洞！' },
+                { icon: '❤️', title: '额外生命', desc: '死亡并不总是终点。使用额外生命获得第二次机会，延续你的冒险！' },
+                { icon: '🪙', title: '商店', desc: '在游戏中收集硬币，并在商店中购买强大的道具。聪明购物赢得游戏！' },
+                { icon: '🏆', title: '最高分', desc: '每次安全降落都能获得积分。你能走多远？打破记录，挑战世界！' },
+            ],
+            support_title: '支持与联系',
+            support_text: '有问题、反馈或需要帮助？',
+            support_text2: '我们在这里！发送邮件给我们：',
+            footer_rights: '版权所有。',
+            footer_privacy: '隐私政策',
+        },
+        'zh-Hant': {
+            flag: '🇹🇼', label: '繁中',
+            title: 'Falling Sun',
+            subtitle: '別讓太陽墜入深淵！',
+            badge: '現已登陸 iOS',
+            download: '在 App Store 下載',
+            about_title: '遊戲介紹',
+            about_text: '在 <strong>Falling Sun</strong> 中，你控制一顆不斷從天空墜落的發光太陽。你的任務：透過安全降落在平台上存活——只需傾斜你的 iPhone！',
+            features_title: '遊戲特色',
+            features: [
+                { icon: '📱', title: '傾斜操控', desc: '左右傾斜你的 iPhone 來引導太陽安全降落。直覺化、靈敏且趣味十足！' },
+                { icon: '🕳️', title: '黑洞', desc: '危險的黑洞潛伏在平台上。躲避它們——或激活彩虹星來摧毀它們！' },
+                { icon: '🪂', title: '降落傘', desc: '陷入致命的自由落體？打開降落傘減速並安全降落。可在商店購買！' },
+                { icon: '🌟', title: '彩虹星', desc: '雙擊螢幕激活彩虹星！變得無敵並摧毀你接觸到的每個黑洞！' },
+                { icon: '❤️', title: '額外生命', desc: '死亡並不總是終點。使用額外生命獲得第二次機會！' },
+                { icon: '🪙', title: '商店', desc: '收集硬幣，在商店購買強大道具。聰明購物贏得遊戲！' },
+                { icon: '🏆', title: '最高分', desc: '每次安全降落都能獲得積分。你能走多遠？打破記錄！' },
+            ],
+            support_title: '支援與聯絡',
+            support_text: '有問題、意見或需要幫助？',
+            support_text2: '我們在這裡！發送郵件給我們：',
+            footer_rights: '版權所有。',
+            footer_privacy: '隱私政策',
+        },
+        ja: {
+            flag: '🇯🇵', label: '日本語',
+            title: 'Falling Sun',
+            subtitle: '太陽を奈落に落とさないで！',
+            badge: 'iOS で配信中',
+            download: 'App Store でダウンロード',
+            about_title: 'ゲームについて',
+            about_text: '<strong>Falling Sun</strong> では、空から絶えず落ち続ける輝く太陽を操ります。使命は、iPhoneを傾けてプラットフォームに安全に着地し、生き残ることです！',
+            features_title: 'ゲームの特徴',
+            features: [
+                { icon: '📱', title: '傾きコントロール', desc: 'iPhoneを左右に傾けて太陽を安全に導こう。直感的で反応が良く、めちゃくちゃ楽しい！' },
+                { icon: '🕳️', title: 'ブラックホール', desc: '危険なブラックホールがプラットフォームに潜んでいる。避けるか、レインボースターで破壊しよう！' },
+                { icon: '🪂', title: 'パラシュート', desc: '致命的な落下中？パラシュートを開いて減速し安全に着地。ショップで入手可能！' },
+                { icon: '🌟', title: 'レインボースター', desc: '画面をダブルタップしてレインボースターを発動！無敵になり、触れたブラックホールをすべて破壊！' },
+                { icon: '❤️', title: 'エクストラライフ', desc: '死がいつも終わりとは限らない。エクストラライフで第二のチャンスをつかもう！' },
+                { icon: '🪙', title: 'ショップ', desc: 'ゲーム中にコインを集めてショップで強力なアイテムを購入しよう！' },
+                { icon: '🏆', title: 'ハイスコア', desc: '安全な着地でポイントを稼ごう。どこまで高く行ける？記録を破って世界に挑戦！' },
+            ],
+            support_title: 'サポート & お問い合わせ',
+            support_text: '質問、フィードバック、またはサポートが必要ですか？',
+            support_text2: 'いつでもご連絡ください！メールをお送りください：',
+            footer_rights: 'All rights reserved.',
+            footer_privacy: 'プライバシーポリシー',
+        },
+        ko: {
+            flag: '🇰🇷', label: '한국어',
+            title: 'Falling Sun',
+            subtitle: '태양이 심연에 떨어지지 않게 하세요!',
+            badge: 'iOS에서 이용 가능',
+            download: 'App Store에서 다운로드',
+            about_title: '게임 소개',
+            about_text: '<strong>Falling Sun</strong>에서 당신은 하늘에서 끝없이 떨어지는 빛나는 태양을 조종합니다. 임무는 iPhone을 기울여 플랫폼에 안전하게 착지해 생존하는 것입니다!',
+            features_title: '게임 특징',
+            features: [
+                { icon: '📱', title: '기울기 조작', desc: 'iPhone을 좌우로 기울여 태양을 안전하게 안내하세요. 직관적이고 반응이 빠르며 정말 재미있어요!' },
+                { icon: '🕳️', title: '블랙홀', desc: '위험한 블랙홀이 플랫폼에 숨어 있습니다. 피하거나 레인보우 스타로 파괴하세요!' },
+                { icon: '🪂', title: '낙하산', desc: '치명적인 자유낙하 중? 낙하산을 펼쳐 속도를 줄이고 안전하게 착지하세요. 상점에서 구매 가능!' },
+                { icon: '🌟', title: '레인보우 스타', desc: '화면을 두 번 탭해 레인보우 스타를 활성화하세요! 무적이 되어 모든 블랙홀을 파괴하세요!' },
+                { icon: '❤️', title: '추가 생명', desc: '죽음이 항상 끝은 아닙니다. 추가 생명으로 두 번째 기회를 잡으세요!' },
+                { icon: '🪙', title: '상점', desc: '게임 중 코인을 모아 상점에서 강력한 아이템을 구매하세요. 전략적인 쇼핑이 승리를 만듭니다!' },
+                { icon: '🏆', title: '최고 점수', desc: '안전한 착지마다 점수를 획득합니다. 얼마나 높이 갈 수 있나요? 기록을 깨고 세계에 도전하세요!' },
+            ],
+            support_title: '지원 & 문의',
+            support_text: '질문, 피드백 또는 도움이 필요하신가요?',
+            support_text2: '언제든지 연락 주세요! 이메일을 보내주세요:',
+            footer_rights: '모든 권리 보유.',
+            footer_privacy: '개인정보 처리방침',
+        },
+    };
+
+    let currentLangKey = 'en';
+
+    function toggleLang() {
+        document.getElementById('langSwitcher').classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#langSwitcher')) {
+            document.getElementById('langSwitcher').classList.remove('open');
+        }
+    });
+
+    function setLang(key) {
+        currentLangKey = key;
+        const lang = LANGS[key];
+        document.getElementById('langSwitcher').classList.remove('open');
+        document.getElementById('currentFlag').textContent = lang.flag;
+        document.getElementById('currentLang').textContent = lang.label;
+        document.documentElement.lang = key;
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const k = el.getAttribute('data-i18n');
+            if (lang[k] !== undefined) el.innerHTML = lang[k];
+        });
+
+        renderFeatures(lang.features);
+
+        document.querySelectorAll('.lang-option').forEach(opt => {
+            opt.classList.toggle('active', opt.getAttribute('onclick') === `setLang('${key}')`);
+        });
+
+        localStorage.setItem('fallingSunLang', key);
+    }
+
+    function renderFeatures(features) {
+        const grid = document.getElementById('featuresGrid');
+        grid.innerHTML = features.map(f => `
+            <div class="feature-card">
+                <span class="feature-icon">${f.icon}</span>
+                <div class="feature-title">${f.title}</div>
+                <div class="feature-desc">${f.desc}</div>
+            </div>
+        `).join('');
+    }
+
+    const savedLang = localStorage.getItem('fallingSunLang') || 'en';
+    setLang(savedLang);
+</script>
 
 </body>
 </html>
